@@ -38,7 +38,8 @@ db_username = 'userName'
 db_pass = 'userPass'
 db_name = 'dbName'
 
-    
+
+## Main API get hook function
 @app.route('/api/v1/sentiment', methods=['GET'])
 def api_sentiment():
     global text
@@ -68,6 +69,7 @@ def predict(text):
     
     return({'Text':text, 'Sentiment': str(sentiment), 'Probability of positive sentiment': str(positive_probability), 'Probability of negative sentiment': str(negative_probabiltiy)})
 
+## Function to load after returning the response
 @app.after_request
 def save_to_db(response):
     global text
