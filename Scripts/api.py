@@ -9,9 +9,6 @@ POC API script for sentiment analysis.
 Deployed using:
     -Tensorflow 1.10
     -Keras 2.2.2
-    -Flask 1.0.2
-    -PyMySQL 0.9.2
-
 """
 
 import flask
@@ -36,6 +33,11 @@ tokenizer = None
 model = None
 text = None
 INPUT_SIZE=700
+db_host = 'yourHost'
+db_username = 'userName'
+db_pass = 'userPass'
+db_name = 'dbName'
+
     
 @app.route('/api/v1/sentiment', methods=['GET'])
 def api_sentiment():
@@ -70,7 +72,7 @@ def predict(text):
 def save_to_db(response):
     global text
     if text != None:
-        db = pymysql.connect("localhost","badrul","2018Mysql","sentiment" )
+        db = pymysql.connect(db_host,db_username,db_pass,db_name)
         cursor = db.cursor()
         sql = "INSERT INTO API_text(Text) VALUES ('%s')" % (text)
         cursor.execute(sql)
@@ -91,7 +93,7 @@ def main():
     with open('../Models/tokenizer.pickle', 'rb') as handle:
         tokenizer = pickle.load(handle)
         
-    app.run()
+    app.run(host='::', port=5000)
 
 if __name__ == '__main__':
     main()
