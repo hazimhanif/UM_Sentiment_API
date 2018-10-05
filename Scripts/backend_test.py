@@ -21,7 +21,7 @@ import warnings
 ## Instance variables
 warnings.filterwarnings('ignore')
 INPUT_SIZE = 700
-text = 'The hotel was nice. However, the food is not good. The reception is great and very convincing.'
+text = 'cool'
 
 
 def main():
@@ -49,3 +49,4 @@ def main():
 if __name__ == '__main__':
     main()
     gc.collect()
+
