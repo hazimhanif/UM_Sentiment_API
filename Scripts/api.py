@@ -16,7 +16,7 @@ Deployed using:
 
 import flask
 import pickle
-import PyMySQL
+import pymysql
 import numpy as np
 from tensorflow.python.keras.preprocessing import sequence as keras_seq
 from tensorflow.python.keras.models import load_model
@@ -25,22 +25,23 @@ import warnings
 
 global tokenizer
 global model
+global text
 global INPUT_SIZE
 
 app = flask.Flask(__name__)
-app.config["DEBUG"] = True
+app.config["DEBUG"] = False
 app.config['JSON_SORT_KEYS'] = False
 warnings.filterwarnings('ignore')
 tokenizer = None
 model = None
+text = None
 INPUT_SIZE=700
     
 @app.route('/api/v1/sentiment', methods=['GET'])
 def api_sentiment():
-
+    global text
     if 'text' in request.args:
         text = str(request.args['text'])
-        print('herer')
         results = predict(text)
         return(jsonify(results))
     else:
@@ -64,7 +65,19 @@ def predict(text):
     negative_probabiltiy = model.predict_proba(x_test)[0][0]
     
     return({'Text':text, 'Sentiment': str(sentiment), 'Probability of positive sentiment': str(positive_probability), 'Probability of negative sentiment': str(negative_probabiltiy)})
-    
+
+@app.after_request
+def save_to_db(response):
+    global text
+    if text != None:
+        db = pymysql.connect("localhost","badrul","2018Mysql","sentiment" )
+        cursor = db.cursor()
+        sql = "INSERT INTO API_text(Text) VALUES ('%s')" % (text)
+        cursor.execute(sql)
+        db.commit()
+        db.close()
+        text=None
+    return response
 
 def main():
     
