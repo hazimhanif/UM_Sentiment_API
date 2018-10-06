@@ -31,7 +31,7 @@ app.config['JSON_SORT_KEYS'] = False
 warnings.filterwarnings('ignore')
 tokenizer = None
 model = None
-text = None
+text = ''
 INPUT_SIZE=700
 db_host = 'yourHost'
 db_username = 'userName'
@@ -45,6 +45,8 @@ def api_sentiment():
     global text
     if 'text' in request.args:
         text = str(request.args['text'])
+        if text == '':
+            return "Error: No text provideed. Please specify a text."
         results = predict(text)
         return(jsonify(results))
     else:
@@ -67,20 +69,20 @@ def predict(text):
     positive_probability = model.predict_proba(x_test)[0][1]
     negative_probabiltiy = model.predict_proba(x_test)[0][0]
     
-    return({'Text':text, 'Sentiment': str(sentiment), 'Probability of positive sentiment': str(positive_probability), 'Probability of negative sentiment': str(negative_probabiltiy)})
+    return({'Text':text, 'Predicted sentiment': str(sentiment), 'Probability of positive sentiment': str(positive_probability), 'Probability of negative sentiment': str(negative_probabiltiy)})
 
 ## Function to load after returning the response
 @app.after_request
 def save_to_db(response):
     global text
-    if text != None:
+    if text != '':
         db = pymysql.connect(db_host,db_username,db_pass,db_name)
         cursor = db.cursor()
         sql = "INSERT INTO API_text(Text) VALUES ('%s')" % (text)
         cursor.execute(sql)
         db.commit()
         db.close()
-        text=None
+        text=''
     return response
 
 def main():
