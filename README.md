@@ -1,7 +1,10 @@
 # UM Sentiment Analysis Web API Deployment
 
-This is the Application Programming Interface (API) development for a sentiment analysis framework managed by Security Research Group (SECREG), Faculty of Computer Science and Information Technology, University of Malaya, Malaysia.
-The sentiment analysis API implements a Word2Seq Convolution Neural Network trained with cross-domain datasets (~1 million instances) using GPU-based Tensorflow.
+This is the Application Programming Interface (API) development for a sentiment analysis framework managed by Security Research Group (SECREG), Faculty of Computer Science and Information Technology, University of Malaya, Malaysia.  
+The sentiment analysis API implements a Word2Seq Convolution Neural Network trained with cross-domain datasets (~1 million instances) using GPU-based Tensorflow.  
+Contributors:  
+* Hazim Hanif
+* Nor Badrul Anuar
 
 ## Installation
 
