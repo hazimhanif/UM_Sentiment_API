@@ -28,7 +28,17 @@ Customize the `database` name according to your own.
 mysql
 CREATE DATABASE sentiment;
 USE sentiment;
-CREATE TABLE API_text (Text varchar(1000));
+CREATE TABLE `API_text` (
+	`ID` INT(11) NOT NULL AUTO_INCREMENT,
+	`Text` VARCHAR(1000) NULL DEFAULT NULL,
+	`Text_hash` CHAR(40) NULL DEFAULT NULL,
+	`Pred_sentiment` CHAR(50) NULL DEFAULT NULL,
+	`Prob_positive` FLOAT NULL DEFAULT NULL,
+	`Prob_negative` FLOAT UNSIGNED NULL DEFAULT NULL,
+	`IP_address` CHAR(20) NULL DEFAULT NULL,
+	`Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+	INDEX `Index 1` (`ID`)
+)
 COMMIT;
 ```
 
@@ -95,7 +105,7 @@ python api.py
 
 ### Using the API
 Simplest example to use the API is through the browser.  
-Define a API call URL.  
+Define an API call URL.  
 e.g: `http://localhost:5000/api/v1/sentiment?text=<InsertYourTextHere>` 
 
 You need to use `%20` as *SPACE* in the text.  

@@ -1,19 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Oct  5 15:52:53 2018
+Created on Wed Oct 10 14:33:40 2018
 
 @author: hazim
-
-POC API script for sentiment analysis.
-
-Deployed using:
-    -Tensorflow 1.10
-    -Keras 2.2.2
 """
 
 import flask
 import pickle
-import pymysql
 import numpy as np
 from tensorflow.python.keras.preprocessing import sequence as keras_seq
 from tensorflow.python.keras.models import load_model
@@ -24,7 +17,6 @@ global tokenizer
 global model
 global result
 global INPUT_SIZE
-global error
 
 app = flask.Flask(__name__)
 app.config["DEBUG"] = False
@@ -33,7 +25,6 @@ warnings.filterwarnings('ignore')
 tokenizer = None
 model = None
 result = None
-error = None
 INPUT_SIZE=700
 db_host = 'yourHost'
 db_username = 'userName'
@@ -45,10 +36,6 @@ db_name = 'dbName'
 @app.route('/api/v1/sentiment', methods=['GET'])
 def api_sentiment():
     global result
-    global error
-
-    error = False
-    
     if 'text' in request.args:
         text = str(request.args['text'])
         if text == '':
@@ -56,7 +43,6 @@ def api_sentiment():
         result = predict(text)
         return(jsonify({'Text':result[0], 'Predicted sentiment': str(result[1]), 'Probability of positive sentiment': str(result[2]), 'Probability of negative sentiment': str(result[3])}))
     else:
-        error = True
         return "Error: No text field provided. Please specify a text."
 
 def predict(text):
@@ -79,14 +65,10 @@ def predict(text):
 ## Function to load after returning the response
 @app.after_request
 def save_to_db(response):
-    if error != True:
-        db = pymysql.connect(db_host,db_username,db_pass,db_name)
-        cursor = db.cursor()
-        sql = "INSERT INTO API_text(Text,Text_hash) VALUES ('%s', sha1(Text), '%s', %f, %f, '%s')" % (result[0], result[1], result[2], result[3], request.environ.get('HTTP_X_REAL_IP', request.remote_addr))
-        cursor.execute(sql)
-        db.commit()
-        db.close()
-        
+
+    if result[0] != '':
+        print(request.environ.get('HTTP_X_REAL_IP', request.remote_addr))
+        print("Testing")
     return response
 
 def main():
@@ -101,7 +83,7 @@ def main():
     with open('../Models/tokenizer.pickle', 'rb') as handle:
         tokenizer = pickle.load(handle)
         
-    app.run(host='::', port=5000)
+    app.run(host='localhost', port=5000)
 
 if __name__ == '__main__':
     main()
