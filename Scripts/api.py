@@ -82,7 +82,7 @@ def save_to_db(response):
     if error != True:
         db = pymysql.connect(db_host,db_username,db_pass,db_name)
         cursor = db.cursor()
-        sql = "INSERT INTO API_text(Text,Text_hash) VALUES ('%s', sha1(Text), '%s', %f, %f, '%s')" % (result[0], result[1], result[2], result[3], request.environ.get('HTTP_X_REAL_IP', request.remote_addr))
+        sql = "INSERT INTO API_text(Text,Text_hash,Pred_sentiment,Prob_positive,Prob_negative,IP_address) VALUES ('%s', sha1(Text), '%s', %f, %f, '%s')" % (result[0], result[1], result[2], result[3], request.environ.get('HTTP_X_REAL_IP', request.remote_addr))
         cursor.execute(sql)
         db.commit()
         db.close()
