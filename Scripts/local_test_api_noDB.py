@@ -8,13 +8,14 @@ Created on Wed Oct 10 14:33:40 2018
 import flask
 import pickle
 import numpy as np
+import os
 from tensorflow.python.keras.preprocessing import sequence as keras_seq
 from tensorflow.python.keras.models import load_model
 from flask import request, jsonify
 import warnings
 
 global tokenizer
-global model
+global pred_models 
 global result
 global INPUT_SIZE
 
@@ -23,14 +24,33 @@ app.config["DEBUG"] = False
 app.config['JSON_SORT_KEYS'] = False
 warnings.filterwarnings('ignore')
 tokenizer = None
-model = None
+
+pred_models = {}
+INPUT_SIZE = {'word2seq_cnn':700,
+               'word2seq_cnn_birnn_bilstm':100,
+               'word2seq_cnn_lstm':500,
+               'word2seq_lstm':100,
+               'word2vec_cnn':700,
+               'word2vec_cnn_birnn_bilstm':100,
+               'word2vec_cnn_lstm':500,
+               'word2vec_lstm':100}
+
+table_name = {'word2seq_cnn':'Word2Seq_CNN',
+              'word2seq_cnn_birnn_bilstm':'Word2Seq_CNN_BiRNN_BiLSTM',
+              'word2seq_cnn_lstm':'Word2Seq_CNN_LSTM',
+              'word2seq_lstm':'Word2Seq_LSTM',
+              'word2vec_cnn':'Word2Vec_CNN',
+              'word2vec_cnn_birnn_bilstm':'Word2Vec_CNN_BiRNN_BiLSTM',
+              'word2vec_cnn_lstm':'Word2Vec_CNN_LSTM',
+              'word2vec_lstm':'Word2Vec_LSTM'}
+
 result = None
-INPUT_SIZE=700
+WORDS_SIZE = 8000
 db_host = 'yourHost'
 db_username = 'userName'
 db_pass = 'userPass'
 db_name = 'dbName'
-
+retName = ['Predicted sentiment',' Probability of positive sentiment',' Probability of negative sentiment']
 
 ## Main API get hook function
 @app.route('/api/v1/sentiment', methods=['GET'])
@@ -41,42 +61,62 @@ def api_sentiment():
         if text == '':
             return "Error: No text provideed. Please specify a text."
         result = predict(text)
-        return(jsonify({'Text':result[0], 'Predicted sentiment': str(result[1]), 'Probability of positive sentiment': str(result[2]), 'Probability of negative sentiment': str(result[3])}))
+        return(jsonify(result))
     else:
         return "Error: No text field provided. Please specify a text."
 
 def predict(text):
-    global model
+    global pred_models
+    return_dict={}
     
     ## Tokkenizing test data and create matrix
     list_tokenized_test = tokenizer.texts_to_sequences([text])
-    x_test = keras_seq.pad_sequences(list_tokenized_test, 
-                                     maxlen=INPUT_SIZE,
-                                     padding='post')
-    x_test = x_test.astype(np.int64)
+    return_dict.update({'Text':text})
     
-    ## Predict using the loaded model
-    sentiment = 'Positive' if model.predict_classes(x_test)[0]==1 else 'Negative'
-    positive_probability = model.predict_proba(x_test)[0][1]
-    negative_probabiltiy = model.predict_proba(x_test)[0][0]
+    for model in [model[:-5]for model in os.listdir('../Models')[1:]]:
+        x_test = keras_seq.pad_sequences(list_tokenized_test, 
+                                         maxlen=INPUT_SIZE[model],
+                                         padding='post')
+        x_test = x_test.astype(np.int64)
+
+        ## Predict using the loaded model
+        sentiment = 'Positive' if pred_models[model].predict_classes(x_test)[0]==1 else 'Negative'
+        positive_probability = pred_models[model].predict_proba(x_test)[0][1]
+        negative_probability = pred_models[model].predict_proba(x_test)[0][0]
+        #save_to_db(model, text, sentiment, positive_probability, negative_probability)
+        
+        return_dict.update({table_name[model].replace('_',' '): 
+            {retName[0]:str(sentiment), 
+             retName[1]:str(positive_probability), 
+             retName[2]:str(negative_probability)}})
     
-    return([text, sentiment, positive_probability, negative_probabiltiy])
+    return(return_dict)
 
-## Function to load after returning the response
-@app.after_request
-def save_to_db(response):
-
-    if result[0] != '':
-        print(request.environ.get('HTTP_X_REAL_IP', request.remote_addr))
-        print("Testing")
-    return response
+def save_to_db(model, text, sentiment, positive_probability, negative_probability):
+    if error != True:
+        db = pymysql.connect(db_host,db_username,db_pass,db_name)
+        cursor = db.cursor()
+        sql = "INSERT INTO %s(Text,Text_hash,Pred_sentiment,Prob_positive,Prob_negative,IP_address) VALUES ('%s', sha1(Text), '%s', %f, %f, '%s')" % (table_name[model], text, sentiment, positive_probability, negative_probability, request.environ.get('HTTP_X_REAL_IP', request.remote_addr))
+        cursor.execute(sql)
+        db.commit()
+        db.close()
 
 def main():
+    ## Load the Keras-Tensorflow models into a dictionary
+    global pred_models 
     
-    ## Load the Keras-Tensorflow model
-    global model
-    model = load_model('../Models/mcp_erezeki_word_conv1D.hdf5')
-    model._make_predict_function()
+    pred_models={'word2seq_cnn' : load_model('../Models/word2seq_cnn.hdf5'),
+    'word2seq_lstm' : load_model('../Models/word2seq_lstm.hdf5'),
+    'word2seq_cnn_lstm' : load_model('../Models/word2seq_cnn_lstm.hdf5'),
+    'word2seq_cnn_birnn_bilstm' : load_model('../Models/word2seq_cnn_birnn_bilstm.hdf5'),
+    'word2vec_cnn' : load_model('../Models/word2vec_cnn.hdf5'),
+    'word2vec_lstm' : load_model('../Models/word2vec_lstm.hdf5'),
+    'word2vec_cnn_lstm' : load_model('../Models/word2vec_cnn_lstm.hdf5'),
+    'word2vec_cnn_birnn_bilstm': load_model('../Models/word2vec_cnn_birnn_bilstm.hdf5')}
+    
+    ## Make prediction function
+    for model in [model[:-5]for model in os.listdir('../Models')[1:]]:
+        pred_models[model]._make_predict_function()
     
     ## Loading the Keras Tokenizer sequence file
     global tokenizer
