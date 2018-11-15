@@ -97,7 +97,7 @@ def predict(text):
         sentiment = 'Positive' if pred_models[model].predict_classes(x_test)[0]==1 else 'Negative'
         positive_probability = pred_models[model].predict_proba(x_test)[0][1]
         negative_probability = pred_models[model].predict_proba(x_test)[0][0]
-        #save_to_db(model, text, sentiment, positive_probability, negative_probability)
+        save_to_db(model, text, sentiment, positive_probability, negative_probability)
         
         return_dict.update({table_name[model].replace('_',' '): 
             {retName[0]:str(sentiment), 

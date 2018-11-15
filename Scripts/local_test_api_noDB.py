@@ -8,7 +8,7 @@ Created on Wed Oct 10 14:33:40 2018
 import flask
 import pickle
 import numpy as np
-import pymsql
+import pymysql
 import os
 from tensorflow.python.keras.preprocessing import sequence as keras_seq
 from tensorflow.python.keras.models import load_model
