@@ -52,7 +52,7 @@ db_host = 'yourHost'
 db_username = 'userName'
 db_pass = 'userPass'
 db_name = 'dbName'
-retName = ['Predicted sentiment',' Probability of positive sentiment',' Probability of negative sentiment']
+retName = ['Predicted sentiment','Probability of positive sentiment','Probability of negative sentiment']
 
 ## Main API get hook function
 @app.route('/api/v1/sentiment', methods=['GET'])
