@@ -8,6 +8,7 @@ Created on Wed Oct 10 14:33:40 2018
 import flask
 import pickle
 import numpy as np
+import pymsql
 import os
 from tensorflow.python.keras.preprocessing import sequence as keras_seq
 from tensorflow.python.keras.models import load_model
@@ -18,12 +19,14 @@ global tokenizer
 global pred_models 
 global result
 global INPUT_SIZE
+global error
 
 app = flask.Flask(__name__)
 app.config["DEBUG"] = False
 app.config['JSON_SORT_KEYS'] = False
 warnings.filterwarnings('ignore')
 tokenizer = None
+error = None
 
 pred_models = {}
 INPUT_SIZE = {'word2seq_cnn':700,
@@ -44,7 +47,6 @@ table_name = {'word2seq_cnn':'Word2Seq_CNN',
               'word2vec_cnn_lstm':'Word2Vec_CNN_LSTM',
               'word2vec_lstm':'Word2Vec_LSTM'}
 
-result = None
 WORDS_SIZE = 8000
 db_host = 'yourHost'
 db_username = 'userName'
@@ -55,7 +57,9 @@ retName = ['Predicted sentiment',' Probability of positive sentiment',' Probabil
 ## Main API get hook function
 @app.route('/api/v1/sentiment', methods=['GET'])
 def api_sentiment():
-    global result
+    global error
+    error = False
+    
     if 'text' in request.args:
         text = str(request.args['text'])
         if text == '':
@@ -63,6 +67,7 @@ def api_sentiment():
         result = predict(text)
         return(jsonify(result))
     else:
+        error = True
         return "Error: No text field provided. Please specify a text."
 
 def predict(text):
